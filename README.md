@@ -142,6 +142,24 @@ this.store.dispatch({
           }
         });
 ```
+With an **action creator** actions can be declared.
+
+```ts
+import {props} from '@ngrx/store';
+import {User} from './user.model';
+
+export const login = createAction('[Login Page] User Login', props<{ user: User }>())
+```
+The **action type** definition is the only mandatory argument and follows a convention where in the square brackets the source of the action is described. The other part describes the action itself. 
+The method defined that way can be used later to create login actions 
+```ts
+const newLoginAction = login({user: {...}}); 
+```
+![](assets/login_action.png)
+___
+!!! Important: an action never modifies the store state directly. 
+___
+
 
 
 
