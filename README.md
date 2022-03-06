@@ -159,6 +159,33 @@ const newLoginAction = login({user: {...}});
 ___
 !!! Important: an action never modifies the store state directly. 
 ___
+A simple way to group actions is to create a file action-types and using this pattern:
+```ts
+import * as AuthActions from './auth.actions';
+
+export {AuthActions};
+```
+they are grouped and can be accessed together.
+
+## NgRx Reducers 
+A **reducer** is a plane JS function that modifies the state.
+```ts
+function authReducer(state, action): State {
+    ...
+}
+```
+There is also a createReducer function:
+```ts
+export const authReducer = createReducer(initAuthState,
+  on(AuthActions.login, (state, action) => {
+    return {
+      ...state,
+      user: action.user
+    };
+  })
+);
+```
+![](assets/login_reducer.png)
 
 
 
