@@ -119,4 +119,20 @@ app.module.ts will be changed:
 ```ts
 StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: environment.production })
 ```
+## NgRx key concepts - actions and reducers
+### Configuring the NgRx Feature module using the NgRx schematics
+- The auth module is eagerly setup. 
+- The courses module is lazy loaded.
+
+For the auth module the store is setup by:
+`ng generate store auth/Auth --module auth.module.ts`
+
+This mainly affects the auth.module.ts file by adding the StoreModule declaration. Finally we remove the `{ metaReducers: fromAuth.metaReducers }` definition because it is not used in that module. Secondly the index.ts file is generated. 
+When we run the application a new store is added and can be seen in the redux dev tools:
+
+![](assets/auth_added.png)
+
+
+
+
 
