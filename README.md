@@ -191,17 +191,39 @@ export const authReducer = createReducer(initAuthState,
 ### Query store data
 Pipe into an observable:
 ```ts
-      this.isLoggedIn$ = this.store.pipe(
-        map(state => !!state['auth'].user)
-      );
+this.isLoggedIn$ = this.store.pipe(
+  map(state => !!state['auth'].user)
+);
 ```
 ### Selectors
 It is possible to reduce the number of changes to those of real value changes. One way would be to use the `distinctUntilChanged()` operator. But NgRx has something built in because its usage is so common in state queries. It is the `select` operator. 
 ```ts
-      this.isLoggedIn$ = this.store.pipe(
-        select(state => !!state['auth'].user)
-      );
+this.isLoggedIn$ = this.store.pipe(
+  select(state => !!state['auth'].user)
+);
 ```
+We can take it a step further and avoid even the calculation of `!!state['auth'].user` every time the store has been updated by using a **Selector**. It keeps memory of previous calculation in a cache - essentially it is a mapping function with memory.
+In a ...selectors.ts file of the store module we can define Selector creators:
+```ts
+export const isLoggedIn: Selector<AuthState, boolean> = createSelector(state => state['auth'], auth => !!auth.user);
+```
+used then like:
+```ts
+this.isLoggedIn$ = this.store.pipe(
+    select(isLoggedIn)
+);
+```
+Because its simply a mapping function we can even define selectors like this:
+```ts
+export const isLoggedOut: Selector<AuthState, boolean> = createSelector(isLoggedIn, loggedIn => !loggedIn);
+```
+Where `isLoggedIn` was just the other selector creator. 
+
+
+
+
+
+
 
 
 
