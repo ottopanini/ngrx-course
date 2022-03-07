@@ -132,7 +132,7 @@ When we run the application a new store is added and can be seen in the redux de
 
 ![](assets/auth_added.png)
 
-## Actions and action creators 
+### Actions and action creators 
 An **action** is a plane JS object that we send to store to trigger some modifications of the store. An action contains typically a type and a payload. 
 ```ts
 this.store.dispatch({
@@ -167,7 +167,7 @@ export {AuthActions};
 ```
 they are grouped and can be accessed together.
 
-## NgRx Reducers 
+### NgRx Reducers 
 A **reducer** is a plane JS function that modifies the state.
 ```ts
 function authReducer(state, action): State {
@@ -187,6 +187,15 @@ export const authReducer = createReducer(initAuthState,
 ```
 ![](assets/login_reducer.png)
 
+## NgRx key concepts - Selectors and Effects
+### Query store data
+Pipe into an observable:
+```ts
+      this.isLoggedIn$ = this.store.pipe(
+        map(state => !!state['auth'].user)
+      );
+```
+### Selectors
 
 
 
