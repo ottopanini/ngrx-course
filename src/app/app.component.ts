@@ -42,10 +42,10 @@ export class AppComponent implements OnInit {
       });
 
       this.isLoggedIn$ = this.store.pipe(
-        map(state => !!state['auth'].user)
+        select(state => !!state['auth'].user)
       );
       this.isLoggedOut$ = this.store.pipe(
-        map(state => !state['auth'].user)
+        select(state => !state['auth'].user)
       );
     }
 

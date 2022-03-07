@@ -196,6 +196,12 @@ Pipe into an observable:
       );
 ```
 ### Selectors
+It is possible to reduce the number of changes to those of real value changes. One way would be to use the `distinctUntilChanged()` operator. But NgRx has something built in because its usage is so common in state queries. It is the `select` operator. 
+```ts
+      this.isLoggedIn$ = this.store.pipe(
+        select(state => !!state['auth'].user)
+      );
+```
 
 
 
