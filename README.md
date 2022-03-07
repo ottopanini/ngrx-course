@@ -218,6 +218,16 @@ Because its simply a mapping function we can even define selectors like this:
 export const isLoggedOut: Selector<AuthState, boolean> = createSelector(isLoggedIn, loggedIn => !loggedIn);
 ```
 Where `isLoggedIn` was just the other selector creator. 
+## NgRx feature selectors
+The pure selectors we used earlier provide no implicit type information for the projector argument.
+To define typesafe selectors we can use **feature selectors**. 
+```ts
+export const selectAuthState = createFeatureSelector<AuthState>('auth');
+```
+here:
+```ts
+export const isLoggedIn: Selector<AuthState, boolean> = createSelector(selectAuthState, auth => !!auth.user);
+```
 
 
 
