@@ -218,7 +218,7 @@ Because its simply a mapping function we can even define selectors like this:
 export const isLoggedOut: Selector<AuthState, boolean> = createSelector(isLoggedIn, loggedIn => !loggedIn);
 ```
 Where `isLoggedIn` was just the other selector creator. 
-## NgRx feature selectors
+### NgRx feature selectors
 The pure selectors we used earlier provide no implicit type information for the projector argument.
 To define typesafe selectors we can use **feature selectors**. 
 ```ts
@@ -228,6 +228,28 @@ here:
 ```ts
 export const isLoggedIn: Selector<AuthState, boolean> = createSelector(selectAuthState, auth => !!auth.user);
 ```
+### NgRx Effects - what are side effects
+At first import the effects module into the root module. In the imports section add:
+```ts
+EffectsModule.forRoot([AuthEffects])
+```
+where `AuthEffects` is defined like:
+```ts
+@Injectable()
+export class AuthEffects {
+  constructor(private actions$: Actions) {
+    actions$.subscribe(action => {
+      if (action.type === '[Login Page] User Login') {
+        localStorage.setItem('user', JSON.stringify(action['user']));
+      }
+    });
+  }
+}
+```
+With a valid login we can see the user auth saved in the local storage.
+![](assets/login_save_effect.png)
+
+
 
 
 
