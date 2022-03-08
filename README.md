@@ -339,7 +339,11 @@ export interface CoursesState {
 }
 ```
 Here `entities` stores the data in a id query optimized way. Secondly ids reflects the natural order of the items.
-
+With the EntityModule that can be implemented more easy:
+```ts
+export interface CoursesState extends EntityState<Course> {
+}
+```
 
 
 
