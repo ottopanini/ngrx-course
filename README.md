@@ -330,6 +330,17 @@ export function logger(reducer: ActionReducer<any>): ActionReducer<any> {
   };
 }
 ```
+## NgRx entities 
+There is a special pattern known as the entity format. As example for the CoursesState:
+```ts
+export interface CoursesState {
+  entities: { [key: number]: Course };
+  ids: number[];
+}
+```
+Here `entities` stores the data in a id query optimized way. Secondly ids reflects the natural order of the items.
+
+
 
 
 
