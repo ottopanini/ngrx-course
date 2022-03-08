@@ -263,7 +263,26 @@ export class AuthEffects {
   }
 }
 ```
-`ofType(...)` operator - is essentially a NgRx filter (like filter op in RxJs).
+`ofType(...)` operator - is essentially a NgRx filter (like filter op in RxJs).  
+When the `createEffect()` function is used, we can go even further. The function will manage the subscription and error handling for the observable. 
+```ts
+@Injectable()
+export class AuthEffects {
+  login$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.login),
+      tap(action => localStorage.setItem('user', JSON.stringify(action.user)))
+    ),
+    { dispatch: false }
+  );
+
+  constructor(private actions$: Actions) {}
+}
+```
+Side effects have usually further actions to dispatch but here this isn't needed. But we need to tell then, that there is no need to dispatch with the config param `dispatch`.
+
+
+
 
 
 
