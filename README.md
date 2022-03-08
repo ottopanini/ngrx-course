@@ -283,7 +283,8 @@ Side effects have usually further actions to dispatch but here this isn't needed
 ___
 When creating side effects, it is recommended to stop the angular CLI server to prevent infinite loops and crashes.
 ___ 
-## NgRx Development Tools 
+## NgRx Development Tools
+### Setup time travaling for the router
 To have full time machine functionality we need also the router to work with our NgRx state. This is simple by adding the module to the root module imports:
 ```ts
 StoreRouterConnectingModule.forRoot({stateKey: 'router', routerState: RouterState.Minimal})
@@ -299,6 +300,19 @@ export const reducers: ActionReducerMap<AppState> = {
   router: routerReducer
 };
 ```
+### Runtime Checks
+To be sure te state is not modified directly and all actions and stte changes can be monitored with the dev tools add: 
+```ts
+...
+runtimeChecks: {
+  strictStateImmutability: true,
+  strictActionImmutability: true,
+  strictActionSerializability: true,
+  strictStateSerializability: true
+}
+...
+```
+to the root module configuration of the store module.
 
 
 
