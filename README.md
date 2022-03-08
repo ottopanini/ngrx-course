@@ -248,6 +248,22 @@ export class AuthEffects {
 ```
 With a valid login we can see the user auth saved in the local storage.
 ![](assets/login_save_effect.png)
+optimizations:
+```ts
+@Injectable()
+export class AuthEffects {
+  constructor(private actions$: Actions) {
+    const login$ = this.actions$.pipe(
+      ofType(AuthActions.login),
+      tap(action => {
+        localStorage.setItem('user', JSON.stringify(action.user));
+      })
+    );
+    login$.subscribe();
+  }
+}
+```
+`ofType(...)` operator - is essentially a NgRx filter (like filter op in RxJs).
 
 
 
