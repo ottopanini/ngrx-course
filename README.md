@@ -314,6 +314,23 @@ runtimeChecks: {
 ```
 to the root module configuration of the store module.
 
+### Metareducer
+Like common reducers but in difference metaReducers are called before the reducers are called.
+When to use metaReducers:
+- strictStateImmutability was implemented at first by using metaReducers
+- cross cutting requirements like logging
+
+```ts
+export function logger(reducer: ActionReducer<any>): ActionReducer<any> {
+  return (state, action) => {
+    console.log('state before: ', state);
+    console.log('action: ', action);
+
+    return reducer(state, action);
+  };
+}
+```
+
 
 
 
