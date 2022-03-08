@@ -280,7 +280,9 @@ export class AuthEffects {
 }
 ```
 Side effects have usually further actions to dispatch but here this isn't needed. But we need to tell then, that there is no need to dispatch with the config param `dispatch`.
-
+___
+When creating side effects, it is recommended to stop the angular CLI server to prevent infinite loops and crashes.
+___ 
 
 
 
