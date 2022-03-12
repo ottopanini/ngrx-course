@@ -367,7 +367,20 @@ with addding:
 export const {selectAll} = adapter.getSelectors();
 ```
 in the course.reducer.ts file.
-
+### Entity adapter configuration - understanding sortComparator and selectId 
+The course should be sorted by their sequential number. With the `compareCourses` function we can already sort the courses by just inserting:
+```ts
+export const adapter = createEntityAdapter<Course>({
+  sortComparer: compareCourses
+});
+```
+The default key for the id field is `id` but however if you choose differently you can specify a custom id field by passing:
+```ts
+export const adapter = createEntityAdapter<Course>({
+  sortComparer: compareCourses,
+  selectId: course => course.courseId
+});
+```
 
 
 
