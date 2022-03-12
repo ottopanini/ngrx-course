@@ -8,7 +8,6 @@ export interface CoursesState extends EntityState<Course> {
 
 export const adapter = createEntityAdapter<Course>({
   sortComparer: compareCourses,
-  selectId: course => course.courseId
 });
 
 export const initialCoursesState = adapter.getInitialState();

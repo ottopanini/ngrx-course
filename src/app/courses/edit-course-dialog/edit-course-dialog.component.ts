@@ -62,7 +62,7 @@ export class EditCourseDialogComponent {
       ...this.form.value
     };
 
-    this.coursesService.saveCourse(course.courseId, course)
+    this.coursesService.saveCourse(course.id, course)
       .subscribe(
         () => this.dialogRef.close()
       );
