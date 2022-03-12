@@ -436,6 +436,41 @@ resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<a
 ```
 Here we use the selector to first determine the loaded state. The final filter is important here so that the sream only gets fully evaluated when all courses have been loaded.
 
+### Optimistically Editing Entity Data - The Edit Course Dialog
+To update a course in the courses list, we create a new action:
+```ts
+export const courseUpdated = createAction(
+  '[Edit Course Dialog] Course Updated',
+  props<{update: Update<Course>}>()
+);
+```
+The NgRx `Update` can be used with NgRx entities for partial updates. In the onSave function of the edit course dialog component:
+```ts
+onSave() {
+  const course: Course = {
+    ...this.course,
+    ...this.form.value
+  };
+
+  const update: Update<Course> = {
+    id: course.id,
+    changes: course
+  };
+
+  this.store.dispatch(courseUpdated({update}));
+  //...
+}
+```
+It's important to use `concatMap` for the save side effect. 
+```ts
+updateCourse$ = createEffect(
+  () => this.action$.pipe(
+    ofType(CourseActions.courseUpdated),
+    concatMap(action => this.coursesHttpService.saveCourse(action.update.id, action.update.changes))
+  ),
+  {dispatch: false}
+);
+```
 
 
 
