@@ -392,6 +392,49 @@ export const adapter = createEntityAdapter<Course>({
   selectId: course => course.courseId
 });
 ```
+### Load data only when it's needed
+To achieve this we need to change the resolver and add another state with adapter.
+```ts
+export interface CoursesState extends EntityState<Course> {
+  allCoursesLoaded: boolean;
+}
+// ...
+export const initialCoursesState = adapter.getInitialState({
+  allCoursesLoaded: false
+});
+
+export const coursesReducer = createReducer(
+  initialCoursesState,
+  on(
+    CourseActions.allCoursesLoaded,
+    (state, action) => adapter.addAll(action.courses, {...state, allCoursesLoaded: true}))
+);
+```
+The selector:
+```ts
+export const areCoursesLoaded = createSelector(
+  selectAllCourses,
+    courses => courses && courses.length > 0
+);
+```
+and finally the resolver:
+```ts
+resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
+  return this.store.pipe(
+    select(areCoursesLoaded),
+    tap(coursesLoaded => {
+      if (!this.loading && !coursesLoaded) {
+        this.loading = true;
+        this.store.dispatch(loadAllCourses());
+      }
+    }),
+    filter(coursesLoaded => coursesLoaded),
+    first(),
+    finalize(() => this.loading = false)
+  );
+}
+```
+Here we use the selector to first determine the loaded state. The final filter is important here so that the sream only gets fully evaluated when all courses have been loaded.
 
 
 
