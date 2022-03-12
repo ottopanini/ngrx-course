@@ -104,6 +104,17 @@ It's also possible to download a ZIP file for a given branch,  using the branch 
 - no specific logic for handling data modifications in views 
 - minimal loading indicators 
 
+### Redux State Management
+![](assets/redux.png)
+### NgRx State Management
+![](assets/ngrx.png)
+Differences to 'normal' Redux:
+
+- deeply integrated into Angular
+- uses RxJS
+- uses TypeScript
+- provides a defined way for implementing side effects such as loading data 
+
 ## Installing NgRx and the NgRx DevTools
 1. `ng add @ngrx/store` (on $id error try:`ng add @ngrx/store@latest --minimal false`)
 app.module.ts will be changed:
