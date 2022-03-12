@@ -473,6 +473,146 @@ updateCourse$ = createEffect(
 ```
 ## NgRx Data
 NgRx Data helps in handling entity data and avoid to much boiler plate. The following examples are committed in the branch *1-auth-finished*.
+### Add NgRx Data to the module
+In app.modules.ts imports add:
+```ts
+//...
+EntityDataModule.forRoot({}),
+//...
+```
+The `{}` means there are no concrete entities at this level. 
+In the courses module we add the specific configuration:
+```ts
+//...
+const entityMetadata: EntityMetadataMap = {
+  Course: {}
+};
+//...
+export class CoursesModule {
+
+  constructor(private eds: EntityDefinitionService) {
+    eds.registerMetadataMap(entityMetadata);
+  }
+}
+```
+In the curly brackets some options can be defined. We will use that later. For now we neeed to register the map via the injected `EntityDefinitionService`.
+### The service to load and update course with NgRx Data
+We create a new file course-entity.service.ts:
+```ts
+import {EntityCollectionServiceBase, EntityCollectionServiceElementsFactory} from '@ngrx/data';
+import {Course} from '../model/course';
+import {Injectable} from '@angular/core';
+
+@Injectable()
+export class CourseEntityService extends  EntityCollectionServiceBase<Course> {
+  constructor(serviceElementsFactory: EntityCollectionServiceElementsFactory) {
+    super('Course', serviceElementsFactory);
+  }
+}
+```
+The `CourseEntityService` must now be added to the Course module providers section:
+```ts
+//...
+providers: [
+  //...
+  CourseEntityService
+]
+//...
+```
+### The Resolver 
+We create a new file courses.resolver.ts in services: 
+```ts
+@Injectable()
+export class CoursesResolver implements Resolve<boolean> {
+  constructor(private coursesService: CourseEntityService) {}
+
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
+    return this.coursesService.getAll().pipe(
+      map(courses => !!courses)
+    );
+  }
+}
+```
+and add it to the course module providers.
+```ts
+//...
+providers: [
+  //...
+  CoursesResolver
+]
+//...
+```
+Finally we can use it now in the routes configuration. 
+```ts
+export const coursesRoutes: Routes = [
+  {
+    path: '',
+    component: HomeComponent,
+    resolve: {
+      courses: CoursesResolver
+    }
+  },
+  {
+    path: ':courseUrl',
+    component: CourseComponent,
+    resolve: {
+      courses: CoursesResolver
+    }
+  }
+];
+```
+NgRx data works by convention. For now we errors though:
+![](assets/fetch-error.png)
+but we will see how to handle it. 
+### Custom Data services
+To define a custom NgRx data service we can create our own service definition:
+```ts
+@Injectable()
+export class CoursesDataService extends DefaultDataService<Course> {
+  constructor(http: HttpClient, httpUrlGenerator: HttpUrlGenerator) {
+    super('Course', http, httpUrlGenerator);
+  }
+}
+```
+For now it uses still the standard configuration.
+... and add it to the courses module providers...
+```ts
+//...
+providers: [
+  //...  
+  CoursesDataService
+]
+//...
+```
+... and register the service in the courses module constructor.
+```ts
+constructor(//...
+            private entityDataService: EntityDataService,
+            private coursesDataService: CoursesDataService) {
+  //...  
+  entityDataService.registerService('Course', coursesDataService);
+}
+```
+With that in place NgRx Data knows there is a custom service definition. 
+Now we can add some costumization.
+
+```ts
+//...
+@Injectable()
+export class CoursesDataService extends DefaultDataService<Course> {
+  //...
+  getAll(): Observable<Course[]> {
+    return this.http.get('/api/courses').pipe(
+      map(res => res['payload'])
+    );
+  }
+}
+```
+
+
+
+
+
 
 
 
