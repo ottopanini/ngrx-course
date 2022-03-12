@@ -344,6 +344,32 @@ With the EntityModule that can be implemented more easy:
 export interface CoursesState extends EntityState<Course> {
 }
 ```
+### NgRx Entity Adapter 
+The access of NgRx entities can become cumbersome. NgRx provides an utility known as **adapter**.
+In course.reducers.ts file:
+```ts
+export const adapter = createEntityAdapter<Course>();
+```
+The adapter makes it easy to modify a list in the reducer. 
+```ts
+export const coursesReducer = createReducer(
+  initialCoursesState,
+  on(CourseActions.allCoursesLoaded, (state, action) => adapter.addAll(action.courses, state))
+);
+```
+### NgRx Entity Selectors
+We can use our adapter here in courses.selectors.ts:
+```ts
+export const selectAllCourses = createSelector(selectCoursesState, fromCourses.selectAll);
+```
+with addding:
+```ts
+export const {selectAll} = adapter.getSelectors();
+```
+in the course.reducer.ts file.
+
+
+
 
 
 
