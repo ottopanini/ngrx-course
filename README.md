@@ -608,8 +608,22 @@ export class CoursesDataService extends DefaultDataService<Course> {
   }
 }
 ```
-
-
+### Controlling Data Loading with the NgRx Data loaded flag
+To load the data only once the following changes must be done for the courses resolver:
+```ts
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
+    return this.coursesService.loaded$.pipe(
+      tap((loaded: boolean) => {
+        if (!loaded) {
+          this.coursesService.getAll();
+        }
+      }),
+      filter(loaded => !!loaded),
+      first()
+    );
+  }
+```
+`loaded$` is an observable of the loaded state. The rest is common with our previous approach for loading just once with plain entities.
 
 
 
