@@ -81,78 +81,410 @@ We can checkout the remote branch and start tracking it with a local branch that
 
 It's also possible to download a ZIP file for a given branch,  using the branch dropdown on this page on the top left, and then selecting the Clone or Download / Download as ZIP button.
 
-# Other Courses
+# Course Notes
+## General Setup
 
-# Angular Core Deep Dive Course
+1. open in IntelliJ
+2. `npm install`
+3. `git checkout 1-start`
+4. run backend server in a console: `npm run server`
+5. run frontend server in another console: `npm start`
 
-If you are looking for the [Angular Core Deep Dive Course](https://angular-university.io/course/angular-course), the repo with the full code can be found here:
+## What is state management
 
-![Angular Core Deep Dive](https://s3-us-west-1.amazonaws.com/angular-university/course-images/angular-core-in-depth-small.png)
+**without state management:**
+- each time the navigation changes data is loaded even though we might have visited the same page already previously
+- changes in multipe components are usually triggered by 'fresh' backend requests
+- Observables for backend requests are tied to components (at least via services)
+- livecycle of the data is typically tied to the lifecycle of components
 
-# RxJs In Practice
+**requirments for state management:**
+- we want to get rid of redundant http requests
+- save actions in background (without making the user wait)
+- no specific logic for handling data modifications in views 
+- minimal loading indicators 
 
-If you are looking for the [RxJs In Practice](https://angular-university.io/course/rxjs-course), the repo with the full code can be found here:
+### Redux State Management
+![](assets/redux.png)
+### NgRx State Management
+![](assets/ngrx.png)
+Differences to 'normal' Redux:
 
-![RxJs In Practice Course](https://s3-us-west-1.amazonaws.com/angular-university/course-images/rxjs-in-practice-course.png)
+- deeply integrated into Angular
+- uses RxJS
+- uses TypeScript
+- provides a defined way for implementing side effects such as loading data 
+
+## Installing NgRx and the NgRx DevTools
+1. `ng add @ngrx/store` (on $id error try:`ng add @ngrx/store@latest --minimal false`)
+app.module.ts will be changed:
+```ts
+...
+StoreModule.forRoot(reducers, {
+      metaReducers
+    })
+...
+```
+2. `ng add @ngrx/store-devtools` (on $id error try:`ng add @ngrx/store-devtools@latest`)
+app.module.ts will be changed:
+```ts
+StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: environment.production })
+```
+## NgRx key concepts - actions and reducers
+### Configuring the NgRx Feature module using the NgRx schematics
+- The auth module is eagerly setup. 
+- The courses module is lazy loaded.
+
+For the auth module the store is setup by:
+`ng generate store auth/Auth --module auth.module.ts`
+
+This mainly affects the auth.module.ts file by adding the StoreModule declaration. Finally we remove the `{ metaReducers: fromAuth.metaReducers }` definition because it is not used in that module. Secondly the index.ts file is generated. 
+When we run the application a new store is added and can be seen in the redux dev tools:
+
+![](assets/auth_added.png)
+
+### Actions and action creators 
+An **action** is a plane JS object that we send to store to trigger some modifications of the store. An action contains typically a type and a payload. 
+```ts
+this.store.dispatch({
+          type: 'Login Action',
+          payload: {
+            userProfile: user
+          }
+        });
+```
+With an **action creator** actions can be declared.
+
+```ts
+import {props} from '@ngrx/store';
+import {User} from './user.model';
+
+export const login = createAction('[Login Page] User Login', props<{ user: User }>())
+```
+The **action type** definition is the only mandatory argument and follows a convention where in the square brackets the source of the action is described. The other part describes the action itself. 
+The method defined that way can be used later to create login actions 
+```ts
+const newLoginAction = login({user: {...}}); 
+```
+![](assets/login_action.png)
+___
+!!! Important: an action never modifies the store state directly. 
+___
+A simple way to group actions is to create a file action-types and using this pattern:
+```ts
+import * as AuthActions from './auth.actions';
+
+export {AuthActions};
+```
+they are grouped and can be accessed together.
+
+### NgRx Reducers 
+A **reducer** is a plane JS function that modifies the state.
+```ts
+function authReducer(state, action): State {
+    ...
+}
+```
+There is also a createReducer function:
+```ts
+export const authReducer = createReducer(initAuthState,
+  on(AuthActions.login, (state, action) => {
+    return {
+      ...state,
+      user: action.user
+    };
+  })
+);
+```
+![](assets/login_reducer.png)
+
+## NgRx key concepts - Selectors and Effects
+### Query store data
+Pipe into an observable:
+```ts
+this.isLoggedIn$ = this.store.pipe(
+  map(state => !!state['auth'].user)
+);
+```
+### Selectors
+It is possible to reduce the number of changes to those of real value changes. One way would be to use the `distinctUntilChanged()` operator. But NgRx has something built in because its usage is so common in state queries. It is the `select` operator. 
+```ts
+this.isLoggedIn$ = this.store.pipe(
+  select(state => !!state['auth'].user)
+);
+```
+We can take it a step further and avoid even the calculation of `!!state['auth'].user` every time the store has been updated by using a **Selector**. It keeps memory of previous calculation in a cache - essentially it is a mapping function with memory.
+In a ...selectors.ts file of the store module we can define Selector creators:
+```ts
+export const isLoggedIn: Selector<AuthState, boolean> = createSelector(state => state['auth'], auth => !!auth.user);
+```
+used then like:
+```ts
+this.isLoggedIn$ = this.store.pipe(
+    select(isLoggedIn)
+);
+```
+Because its simply a mapping function we can even define selectors like this:
+```ts
+export const isLoggedOut: Selector<AuthState, boolean> = createSelector(isLoggedIn, loggedIn => !loggedIn);
+```
+Where `isLoggedIn` was just the other selector creator. 
+### NgRx feature selectors
+The pure selectors we used earlier provide no implicit type information for the projector argument.
+To define typesafe selectors we can use **feature selectors**. 
+```ts
+export const selectAuthState = createFeatureSelector<AuthState>('auth');
+```
+here:
+```ts
+export const isLoggedIn: Selector<AuthState, boolean> = createSelector(selectAuthState, auth => !!auth.user);
+```
+### NgRx Effects - what are side effects
+At first import the effects module into the root module. In the imports section add:
+```ts
+EffectsModule.forRoot([AuthEffects])
+```
+where `AuthEffects` is defined like:
+```ts
+@Injectable()
+export class AuthEffects {
+  constructor(private actions$: Actions) {
+    actions$.subscribe(action => {
+      if (action.type === '[Login Page] User Login') {
+        localStorage.setItem('user', JSON.stringify(action['user']));
+      }
+    });
+  }
+}
+```
+With a valid login we can see the user auth saved in the local storage.
+![](assets/login_save_effect.png)
+optimizations:
+```ts
+@Injectable()
+export class AuthEffects {
+  constructor(private actions$: Actions) {
+    const login$ = this.actions$.pipe(
+      ofType(AuthActions.login),
+      tap(action => {
+        localStorage.setItem('user', JSON.stringify(action.user));
+      })
+    );
+    login$.subscribe();
+  }
+}
+```
+`ofType(...)` operator - is essentially a NgRx filter (like filter op in RxJs).  
+When the `createEffect()` function is used, we can go even further. The function will manage the subscription and error handling for the observable. 
+```ts
+@Injectable()
+export class AuthEffects {
+  login$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.login),
+      tap(action => localStorage.setItem('user', JSON.stringify(action.user)))
+    ),
+    { dispatch: false }
+  );
+
+  constructor(private actions$: Actions) {}
+}
+```
+Side effects have usually further actions to dispatch but here this isn't needed. But we need to tell then, that there is no need to dispatch with the config param `dispatch`.
+___
+When creating side effects, it is recommended to stop the angular CLI server to prevent infinite loops and crashes.
+___ 
+## NgRx Development Tools
+### Setup time travaling for the router
+To have full time machine functionality we need also the router to work with our NgRx state. This is simple by adding the module to the root module imports:
+```ts
+StoreRouterConnectingModule.forRoot({stateKey: 'router', routerState: RouterState.Minimal})
+```
+*stateKey* - is the key the router stores its state to  
+*routerState* - RouterState.Minimal is the minimal configuration for the data held in the state which is a serializable version of the router state containing:
+  - the url 
+  - parameters for triggering the state   
+
+Secondly the reducers map needs to be modified:
+```ts
+export const reducers: ActionReducerMap<AppState> = {
+  router: routerReducer
+};
+```
+### Runtime Checks
+To be sure te state is not modified directly and all actions and stte changes can be monitored with the dev tools add: 
+```ts
+...
+runtimeChecks: {
+  strictStateImmutability: true,
+  strictActionImmutability: true,
+  strictActionSerializability: true,
+  strictStateSerializability: true
+}
+...
+```
+to the root module configuration of the store module.
+
+### Metareducer
+Like common reducers but in difference metaReducers are called before the reducers are called.
+When to use metaReducers:
+- strictStateImmutability was implemented at first by using metaReducers
+- cross cutting requirements like logging
+
+```ts
+export function logger(reducer: ActionReducer<any>): ActionReducer<any> {
+  return (state, action) => {
+    console.log('state before: ', state);
+    console.log('action: ', action);
+
+    return reducer(state, action);
+  };
+}
+```
+## NgRx entities 
+There is a special pattern known as the entity format. As example for the CoursesState:
+```ts
+export interface CoursesState {
+  entities: { [key: number]: Course };
+  ids: number[];
+}
+```
+Here `entities` stores the data in a id query optimized way. Secondly ids reflects the natural order of the items.
+With the EntityModule that can be implemented more easy:
+```ts
+export interface CoursesState extends EntityState<Course> {
+}
+```
+### NgRx Entity Adapter 
+The access of NgRx entities can become cumbersome. NgRx provides an utility known as **adapter**.
+In course.reducers.ts file:
+```ts
+export const adapter = createEntityAdapter<Course>();
+```
+The adapter makes it easy to modify a list in the reducer. 
+```ts
+export const coursesReducer = createReducer(
+  initialCoursesState,
+  on(CourseActions.allCoursesLoaded, (state, action) => adapter.addAll(action.courses, state))
+);
+```
+### NgRx Entity Selectors
+We can use our adapter here in courses.selectors.ts:
+```ts
+export const selectAllCourses = createSelector(selectCoursesState, fromCourses.selectAll);
+```
+with addding:
+```ts
+export const {selectAll} = adapter.getSelectors();
+```
+in the course.reducer.ts file.
+### Entity adapter configuration - understanding sortComparator and selectId 
+The course should be sorted by their sequential number. With the `compareCourses` function we can already sort the courses by just inserting:
+```ts
+export const adapter = createEntityAdapter<Course>({
+  sortComparer: compareCourses
+});
+```
+The default key for the id field is `id` but however if you choose differently you can specify a custom id field by passing:
+```ts
+export const adapter = createEntityAdapter<Course>({
+  sortComparer: compareCourses,
+  selectId: course => course.courseId
+});
+```
+### Load data only when it's needed
+To achieve this we need to change the resolver and add another state with adapter.
+```ts
+export interface CoursesState extends EntityState<Course> {
+  allCoursesLoaded: boolean;
+}
+// ...
+export const initialCoursesState = adapter.getInitialState({
+  allCoursesLoaded: false
+});
+
+export const coursesReducer = createReducer(
+  initialCoursesState,
+  on(
+    CourseActions.allCoursesLoaded,
+    (state, action) => adapter.addAll(action.courses, {...state, allCoursesLoaded: true}))
+);
+```
+The selector:
+```ts
+export const areCoursesLoaded = createSelector(
+  selectAllCourses,
+    courses => courses && courses.length > 0
+);
+```
+and finally the resolver:
+```ts
+resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
+  return this.store.pipe(
+    select(areCoursesLoaded),
+    tap(coursesLoaded => {
+      if (!this.loading && !coursesLoaded) {
+        this.loading = true;
+        this.store.dispatch(loadAllCourses());
+      }
+    }),
+    filter(coursesLoaded => coursesLoaded),
+    first(),
+    finalize(() => this.loading = false)
+  );
+}
+```
+Here we use the selector to first determine the loaded state. The final filter is important here so that the sream only gets fully evaluated when all courses have been loaded.
+
+### Optimistically Editing Entity Data - The Edit Course Dialog
+To update a course in the courses list, we create a new action:
+```ts
+export const courseUpdated = createAction(
+  '[Edit Course Dialog] Course Updated',
+  props<{update: Update<Course>}>()
+);
+```
+The NgRx `Update` can be used with NgRx entities for partial updates. In the onSave function of the edit course dialog component:
+```ts
+onSave() {
+  const course: Course = {
+    ...this.course,
+    ...this.form.value
+  };
+
+  const update: Update<Course> = {
+    id: course.id,
+    changes: course
+  };
+
+  this.store.dispatch(courseUpdated({update}));
+  //...
+}
+```
+It's important to use `concatMap` for the save side effect. 
+```ts
+updateCourse$ = createEffect(
+  () => this.action$.pipe(
+    ofType(CourseActions.courseUpdated),
+    concatMap(action => this.coursesHttpService.saveCourse(action.update.id, action.update.changes))
+  ),
+  {dispatch: false}
+);
+```
+## NgRx Data
+NgRx Data helps in handling entity data and avoid to much boiler plate. The following examples are committed in the branch *1-auth-finished*.
 
 
-# Angular Testing Course
-
-If you are looking for the [Angular Testing Course](https://angular-university.io/course/angular-testing-course), the repo with the full code can be found here:
-
-![Angular Testing Course](https://s3-us-west-1.amazonaws.com/angular-university/course-images/angular-testing-small.png)
-
-# Serverless Angular with Firebase Course
-
-If you are looking for the [Serverless Angular with Firebase Course](https://angular-university.io/course/firebase-course), the repo with the full code can be found here:
-
-![Serverless Angular with Firebase Course](https://s3-us-west-1.amazonaws.com/angular-university/course-images/serverless-angular-small.png)
-
-# Angular Universal Course
-
-If you are looking for the [Angular Universal Course](https://angular-university.io/course/angular-universal-course), the repo with the full code can be found here:
-
-![Angular Universal Course](https://s3-us-west-1.amazonaws.com/angular-university/course-images/angular-universal-small.png)
-
-# Angular PWA Course
-
-If you are looking for the [Angular PWA Course](https://angular-university.io/course/angular-pwa-course), the repo with the full code can be found here:
-
-![Angular PWA Course - Build the future of the Web Today](https://s3-us-west-1.amazonaws.com/angular-university/course-images/angular-pwa-course.png)
-
-# Angular Security Masterclass
-
-If you are looking for the [Angular Security Masterclass](https://angular-university.io/course/angular-security-course), the repo with the full code can be found here:
-
-[Angular Security Masterclass](https://github.com/angular-university/angular-security-course).
-
-![Angular Security Masterclass](https://s3-us-west-1.amazonaws.com/angular-university/course-images/security-cover-small-v2.png)
-
-# Angular Advanced Library Laboratory Course
-
-If you are looking for the Angular Advanced Course, the repo with the full code can be found here:
-
-[Angular Advanced Library Laboratory Course: Build Your Own Library](https://angular-university.io/course/angular-advanced-course).
-
-![Angular Advanced Library Laboratory Course: Build Your Own Library](https://angular-academy.s3.amazonaws.com/thumbnails/advanced_angular-small-v3.png)
 
 
-## RxJs and Reactive Patterns Angular Architecture Course
-
-If you are looking for the RxJs and Reactive Patterns Angular Architecture Course code, the repo with the full code can be found here:
-
-[RxJs and Reactive Patterns Angular Architecture Course](https://angular-university.io/course/reactive-angular-architecture-course)
-
-![RxJs and Reactive Patterns Angular Architecture Course](https://s3-us-west-1.amazonaws.com/angular-academy/blog/images/rxjs-reactive-patterns-small.png)
 
 
-## Complete Typescript Course - Build A REST API
 
-If you are looking for the Complete Typescript 2 Course - Build a REST API, the repo with the full code can be found here:
 
-[https://angular-university.io/course/typescript-2-tutorial](https://github.com/angular-university/complete-typescript-course)
 
-[Github repo for this course](https://github.com/angular-university/complete-typescript-course)
 
-![Complete Typescript Course](https://angular-academy.s3.amazonaws.com/thumbnails/typescript-2-small.png)
+
+
+
+
 
