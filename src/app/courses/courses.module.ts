@@ -22,7 +22,7 @@ import {MatButtonModule} from '@angular/material/button';
 import {MatIconModule} from '@angular/material/icon';
 import {RouterModule, Routes} from '@angular/router';
 import {EntityDataService, EntityDefinitionService, EntityMetadataMap} from '@ngrx/data';
-import {Course} from './model/course';
+import {compareCourses, Course} from './model/course';
 import {CourseEntityService} from './services/course-entity.service';
 import {CoursesResolver} from './services/courses.resolver';
 import {CoursesDataService} from './services/courses-data.service';
@@ -46,7 +46,9 @@ export const coursesRoutes: Routes = [
 ];
 
 const entityMetadata: EntityMetadataMap = {
-  Course: {}
+  Course: {
+    sortComparer: compareCourses
+  }
 };
 
 @NgModule({

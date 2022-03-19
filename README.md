@@ -625,7 +625,34 @@ To load the data only once the following changes must be done for the courses re
 ```
 `loaded$` is an observable of the loaded state. The rest is common with our previous approach for loading just once with plain entities.
 
+### Querying store data with the entities$ observable
 
+```ts
+constructor(
+  // ...
+  private courseEntityService: CourseEntityService) {
+}
+
+// ...
+
+reload()
+{
+  this.beginnerCourses$ = this.courseEntityService.entities$
+      .pipe(
+          map(courses => courses.filter(course => course.category === 'BEGINNER'))
+      );
+  // ...
+}
+```
+### sortComparer
+In courses.module.ts:
+```ts
+const entityMetadata: EntityMetadataMap = {
+  Course: {
+    sortComparer: compareCourses
+  }
+};
+```
 
 
 
