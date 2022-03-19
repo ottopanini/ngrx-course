@@ -755,7 +755,31 @@ and insert it to the providers section of the courses module.
   ]
   // ...
 ```
+### Implementing the Course Component Using NgRx Data 
+Add the entity services to the constructor:
+```ts
+  constructor(
+    private coursesService: CourseEntityService,
+    private lessonsService: LessonEntityService,
+    // ... 
+    ) {
 
+  }
+```
+in ngOnInit we can use the coursesService:
+```ts
+  // ...
+  ngOnInit() {
+
+    const courseUrl = this.route.snapshot.paramMap.get('courseUrl');
+
+    this.course$ = this.coursesService.entities$.pipe(
+      map(courses => courses.find(e => e.url === courseUrl))
+    );
+    // ...
+  }
+  // ...
+```
 
 
 
