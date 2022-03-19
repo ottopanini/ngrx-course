@@ -709,6 +709,22 @@ const entityMetadata: EntityMetadataMap = {
   }
 };
 ```
+### Optimistic delete
+With NgRx Data deletions are easy too. In the handler just call:
+```ts
+// ...
+onDeleteCourse(course: Course) {
+    this.courseEntityService.delete(course).subscribe(
+      () => console.log('Delete completed'),
+      err => console.log('Delete failed: ', err)
+    );
+}
+// ...
+```
+via the entity service. The return type is an observable here so you can have control over when the delete operation has completed.
+The delete operation is optimistically locked by default.
+
+
 
 
 
