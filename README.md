@@ -724,7 +724,37 @@ onDeleteCourse(course: Course) {
 via the entity service. The return type is an observable here so you can have control over when the delete operation has completed.
 The delete operation is optimistically locked by default.
 
-
+### The Lesson Entity
+To add the Lesson Entity to NgRx Data just add it to the entity metadata map in the course module:
+```ts
+// ...
+const entityMetadata: EntityMetadataMap = {
+  // ...  
+  Lesson: {
+    sortComparer: compareLessons
+  }
+};
+// ...
+```
+Create the Lesson Entity service:
+```ts
+@Injectable()
+export class LessonEntityService extends EntityCollectionServiceBase<Lesson> {
+  constructor(serviceElementsFactory: EntityCollectionServiceElementsFactory) {
+    super('Lesson', serviceElementsFactory);
+  }
+}
+```
+and insert it to the providers section of the courses module.
+```ts
+  // ...
+  providers: [
+    // ...
+    LessonEntityService,
+    // ...
+  ]
+  // ...
+```
 
 
 
