@@ -685,8 +685,30 @@ onSave() {
 // ...
 ```
 ### Pessimistic create
-
-
+```ts
+onSave() {
+  const course: Course = {
+    ...this.course,
+    ...this.form.value
+  };
+  // ...
+  if (this.mode === 'create') {
+    this.coursesService.add(course);
+  }
+}
+```
+The create is by default pessimistic. Let's change that in the configuration:
+```ts
+const entityMetadata: EntityMetadataMap = {
+  Course: {
+    // ...  
+    entityDispatcherOptions: {
+      // ...
+      optimisticAdd: true
+    }
+  }
+};
+```
 
 
 
