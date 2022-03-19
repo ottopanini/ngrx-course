@@ -653,8 +653,38 @@ const entityMetadata: EntityMetadataMap = {
   }
 };
 ```
+### Optimistic updates
+Angular has by default a pessimistic approach to updates. NgRx is waiting for the requests completion before changing the state of the store. 
+To change that we can just modify some configuration in the courses.module.ts:
+```ts
+// ...
+const entityMetadata: EntityMetadataMap = {
+  Course: {
+    // ...  
+    entityDispatcherOptions: {
+      optimisticUpdate: true
+    }
+  }
+};
+// ...
+```
+The update itself is triggered like this:
+```ts
+// ...
+onSave() {
+  const course: Course = {
+    ...this.course,
+    ...this.form.value
+  };
 
-
+  if (this.mode === 'update') {
+    this.coursesService.update(course);
+    // ...
+  }
+}
+// ...
+```
+### Pessimistic create
 
 
 
