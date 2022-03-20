@@ -869,8 +869,43 @@ OnPush change detection is an advanced mode of change detection suitable for lar
 - or observables     
 
 have changed.
-
-
+We can use that here:
+```ts
+// ...
+@Component({
+    selector: 'app-home',
+    templateUrl: './home.component.html',
+    styleUrls: ['./home.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class HomeComponent implements OnInit {
+// ...
+```
+and here:
+```ts
+// ...
+@Component({
+    selector: 'app-courses-card-list',
+    templateUrl: './courses-card-list.component.html',
+    styleUrls: ['./courses-card-list.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class CoursesCardListComponent implements OnInit {
+// ...
+```
+and here:
+```ts
+// ...
+@Component({
+  selector: 'app-course-dialog',
+  templateUrl: './edit-course-dialog.component.html',
+  styleUrls: ['./edit-course-dialog.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class EditCourseDialogComponent {
+// ...
+```
+and thats it :.)))
 
 
 
