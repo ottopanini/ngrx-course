@@ -780,10 +780,95 @@ in ngOnInit we can use the coursesService:
   }
   // ...
 ```
+For the lessons we need to add:
+```ts
+// ...
+ngOnInit() {
+  // ...
+  this.lessons$ = this.lessonsService.entities$.pipe(
+    withLatestFrom(this.course$),
+    map(([lessons, course]) => lessons.filter(e => e.courseId === course.id))
+  );
+}
+// ...
+```
+and to have it paginable we can add for the first page:
+```ts
+// ...
+ngOnInit() {
+  // ...
+  this.lessons$ = this.lessonsService.entities$.pipe(
+    withLatestFrom(this.course$),
+    tap(([lessons, course]) => {
+        if (this.nextPage === 0) {
+          this.loadLessonsPage(course);
+        }
+    }),
+    // ...
+  );
+}
+// ...
+```
+and the method `loadLessonsPage`:
+```ts
+loadLessonsPage(course: Course) {
+  this.lessonsService.getWithQuery({
+    'courseId': course.id.toString(),
+    'pageNumber': this.nextPage.toString(),
+    'pageSize': '3'
+  });
+  this.nextPage += 1;
+}
+```
+It will be triggered for the following pages with the 'load more' button.
+Finally we want to have a loading indicator there. So we add a loading observable:
+```ts
+  loading$: Observable<boolean>;
+```
+and initialize it in `ngOnInit`:
+```ts
+// ...
+ngOnInit() {
+    // ...
+    this.loading$ = this.lessonsService.loading$;
+}
+// ...
+```
+There is a little error now:
+![](assets/change-after-checked-error.png)
+which is triggered by the occurrence of two changes within the same change detection run:
+```ts
+  ngOnInit() {
 
+    const courseUrl = this.route.snapshot.paramMap.get('courseUrl');
 
+    this.course$ = this.coursesService.entities$.pipe(
+      map(courses => courses.find(e => e.url === courseUrl))
+    );
 
+    this.lessons$ = this.lessonsService.entities$.pipe(
+      withLatestFrom(this.course$),
+      tap(([lessons, course]) => {
+        if (this.nextPage === 0) {
+          this.loadLessonsPage(course); // here => true
+        }
+      }),
+      map(([lessons, course]) => lessons.filter(e => e.courseId === course.id))
+    );
 
+    this.loading$ = this.lessonsService.loading$; // ande here => false
+  }
+```
+to fix it we just add a little delay for the update:
+```ts
+    this.loading$ = this.lessonsService.loading$.pipe(delay(0));
+```
+### Switching an NgRx Application to OnPush Change Detection
+OnPush change detection is an advanced mode of change detection suitable for large data displays. Here the change detection is only processed when 
+- inputs 
+- or observables     
+
+have changed.
 
 
 
